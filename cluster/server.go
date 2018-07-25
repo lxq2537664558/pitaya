@@ -28,15 +28,15 @@ import (
 
 // Server struct
 type Server struct {
-	ID       string            `json:"id"`
-	Type     string            `json:"type"`
-	Metadata map[string]string `json:"metadata"`
-	Frontend bool              `json:"frontend"`
+	ID       string                 `json:"id"`
+	Type     string                 `json:"type"`
+	Metadata map[string]interface{} `json:"metadata"`
+	Frontend bool                   `json:"frontend"`
 }
 
 // NewServer ctor
-func NewServer(id, serverType string, frontend bool, metadata ...map[string]string) *Server {
-	d := make(map[string]string)
+func NewServer(id, serverType string, frontend bool, metadata ...map[string]interface{}) *Server {
+	d := make(map[string]interface{})
 	if len(metadata) > 0 {
 		d = metadata[0]
 	}

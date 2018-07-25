@@ -30,13 +30,13 @@ import (
 var svTestTables = []struct {
 	id       string
 	svType   string
-	metadata map[string]string
+	metadata map[string]interface{}
 	frontend bool
 }{
-	{"someid-1", "somesvtype", map[string]string{"bla": "ola"}, true},
+	{"someid-1", "somesvtype", map[string]interface{}{"bla": "ola"}, true},
 	{"someid-2", "somesvtype", nil, true},
-	{"someid-3", "somesvtype", map[string]string{"sv": "game"}, false},
-	{"someid-4", "somesvtype", map[string]string{}, false},
+	{"someid-3", "somesvtype", map[string]interface{}{"sv": "game"}, false},
+	{"someid-4", "somesvtype", map[string]interface{}{}, false},
 }
 
 func TestNewServer(t *testing.T) {

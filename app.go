@@ -95,7 +95,7 @@ var (
 		server: &cluster.Server{
 			ID:       uuid.New().String(),
 			Type:     "game",
-			Metadata: map[string]string{},
+			Metadata: map[string]interface{}{},
 			Frontend: true,
 		},
 		debug:            false,
@@ -121,7 +121,7 @@ func Configure(
 	isFrontend bool,
 	serverType string,
 	serverMode ServerMode,
-	serverMetadata map[string]string,
+	serverMetadata map[string]interface{},
 	cfgs ...*viper.Viper,
 ) {
 	if app.configured {

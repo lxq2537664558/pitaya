@@ -37,8 +37,8 @@ import (
 var etcdSDTables = []struct {
 	server *Server
 }{
-	{NewServer("frontend-1", "type1", true, map[string]string{"k1": "v1"})},
-	{NewServer("backend-1", "type2", false, map[string]string{"k2": "v2"})},
+	{NewServer("frontend-1", "type1", true, map[string]interface{}{"k1": "v1"})},
+	{NewServer("backend-1", "type2", false, map[string]interface{}{"k2": "v2"})},
 	{NewServer("backend-2", "type3", false, nil)},
 }
 

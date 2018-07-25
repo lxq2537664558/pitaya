@@ -176,7 +176,7 @@ func (gs *GRPCClient) SendPush(userID string, frontendSv *Server, push *protos.P
 
 // AddServer is called when a new server is discovered
 func (gs *GRPCClient) AddServer(sv *Server) {
-	var host, port string
+	var host, port interface{}
 	var ok bool
 	if host, ok = sv.Metadata["grpc-host"]; !ok {
 		logger.Log.Errorf("server %s doesn't have a grpc-host specified in metadata", sv.ID)

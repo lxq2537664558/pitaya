@@ -110,6 +110,6 @@ func main() {
 		configureFrontend(*port)
 	}
 
-	pitaya.Configure(*isFrontend, *svType, pitaya.Cluster, map[string]string{})
+	pitaya.Configure(*isFrontend, *svType, pitaya.Cluster, map[string]interface{}{})
 	pitaya.Start()
 }

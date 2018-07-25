@@ -65,7 +65,7 @@ func TestRegisterRemote(t *testing.T) {
 func TestStartupComponents(t *testing.T) {
 	initApp()
 	resetComps()
-	Configure(true, "testtype", Standalone, map[string]string{}, viper.New())
+	Configure(true, "testtype", Standalone, map[string]interface{}{}, viper.New())
 
 	Register(&MyComp{})
 	RegisterRemote(&MyComp{})
@@ -76,7 +76,7 @@ func TestStartupComponents(t *testing.T) {
 func TestShutdownComponents(t *testing.T) {
 	resetComps()
 	initApp()
-	Configure(true, "testtype", Standalone, map[string]string{}, viper.New())
+	Configure(true, "testtype", Standalone, map[string]interface{}{}, viper.New())
 
 	Register(&MyComp{})
 	RegisterRemote(&MyComp{})

@@ -208,7 +208,7 @@ func TestAddServer(t *testing.T) {
 	server := &Server{
 		ID:   "someid",
 		Type: "sometype",
-		Metadata: map[string]string{
+		Metadata: map[string]interface{}{
 			"grpc-host": "localhost",
 			"grpc-port": fmt.Sprintf("%d", port),
 		},

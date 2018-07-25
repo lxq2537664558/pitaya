@@ -74,7 +74,7 @@ func TestGetModule(t *testing.T) {
 func TestStartupModules(t *testing.T) {
 	initApp()
 	resetModules()
-	Configure(true, "testtype", Standalone, map[string]string{}, viper.New())
+	Configure(true, "testtype", Standalone, map[string]interface{}{}, viper.New())
 
 	RegisterModule(&MyMod{}, "bla")
 	startModules()
@@ -84,7 +84,7 @@ func TestStartupModules(t *testing.T) {
 func TestShutdownModules(t *testing.T) {
 	resetModules()
 	initApp()
-	Configure(true, "testtype", Standalone, map[string]string{}, viper.New())
+	Configure(true, "testtype", Standalone, map[string]interface{}{}, viper.New())
 
 	RegisterModule(&MyMod{}, "bla")
 	startModules()
