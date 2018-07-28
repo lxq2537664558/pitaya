@@ -22,6 +22,7 @@ package component
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/topfreegames/pitaya/constants"
@@ -170,4 +171,46 @@ func (h *Handler) ValidateMessageType(msgType message.Type) (exitOnError bool, e
 		}
 	}
 	return
+}
+
+func (h *Handler) print() {
+	allIn := []map[string]interface{}{}
+	allOut := []map[string]interface{}{}
+
+	if h.Method.Type.NumIn() > 2 {
+		in := h.Method.Type.In(2)
+		elm := in.Elem()
+		fields := map[string]interface{}{}
+		for i := 0; i < elm.NumField(); i++ {
+			fields[elm.Field(i).Name] = elm.Field(i).Type
+		}
+		allIn = append(allIn, map[string]interface{}{
+			in.Name(): fields,
+		})
+	}
+
+	for i := 0; i < h.Method.Type.NumOut(); i++ {
+		out := h.Method.Type.Out(i)
+		if out.Kind() == reflect.Ptr {
+			elm := out.Elem()
+			fields := map[string]interface{}{}
+			for j := 0; j < elm.NumField(); j++ {
+				fields[elm.Field(j).Name] = elm.Field(j).Type
+			}
+			allOut = append(allOut, map[string]interface{}{
+				out.Name(): fields,
+			})
+		} else {
+			allOut = append(allOut, map[string]interface{}{
+				out.Name(): out.Kind(),
+			})
+		}
+	}
+
+	res := map[string]interface{}{
+		"in":  allIn,
+		"out": allOut,
+	}
+
+	fmt.Printf("HENROD %+v \n", res)
 }
