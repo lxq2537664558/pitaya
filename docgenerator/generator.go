@@ -1,16 +1,47 @@
 package docgenerator
 
 import (
-	"encoding/json"
+	"bufio"
+	"bytes"
+	"html/template"
 	"reflect"
 	"strings"
 	"unicode"
 )
 
 // HTMLDocForHandlers ...
-func HTMLDocForHandlers(handlers map[string]reflect.Method) string {
-	bts, _ := json.MarshalIndent(docsForHandlers(handlers), "", "	")
-	return string(bts)
+func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
+	docs := docsForHandlers(handlers)
+
+	const tpl = `
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+	</head>
+	<body>
+		{{range $key, $value := .}}
+			<div>
+			<b>{{ $key }}</b>
+			{{ $value }}
+			</div>
+		{{end}}
+	</body>
+</html>`
+
+	t, err := template.New("dochtml").Parse(tpl)
+	if err != nil {
+		return "", nil
+	}
+
+	var b bytes.Buffer
+	writer := bufio.NewWriter(&b)
+	err = t.ExecuteTemplate(writer, "dochtml", docs)
+	if err != nil {
+		return "", nil
+	}
+
+	return b.String(), nil
 }
 
 // Doc ...
