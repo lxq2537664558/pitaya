@@ -24,13 +24,6 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 		<meta charset="UTF-8">
 	</head>
 	<body>
-		<script>
-		try {
-			for (const o of document.getElementsByName("json")) {
-				o.innerHTML = JSON.stringify(JSON.parse(o.innerHTML), undefined, 4)
-			}
-		} catch(e) {}
-		</script>
 		{{ range $key, $value := . }}
 			<div>
 			<h2>{{ $key }}</h2>
@@ -42,6 +35,13 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 			{{ end }}
 			</div>
 		{{ end }}
+	<script>
+	for (const o of document.getElementsByName("json")) {
+		try {
+			o.innerHTML = JSON.stringify(JSON.parse(o.innerHTML), undefined, 4)
+		} catch(e) {}
+	}
+	</script>
 	</body>
 </html>`
 
