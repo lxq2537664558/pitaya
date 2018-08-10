@@ -320,7 +320,7 @@ func (h *HandlerService) DumpServices() {
 }
 
 // HandlersDoc ...
-func (h *HandlerService) HandlersDoc() string {
+func (h *HandlerService) HandlersDoc() (string, error) {
 	methods := map[string]reflect.Method{}
 	for name, handler := range handlers {
 		methods[name] = handler.Method

@@ -32,8 +32,6 @@ import (
 	"syscall"
 	"time"
 
-	ejson "encoding/json"
-
 	"github.com/google/uuid"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/spf13/viper"
@@ -504,14 +502,14 @@ func ExtractSpan(ctx context.Context) (opentracing.SpanContext, error) {
 
 func exposeHandlersDoc() {
 	http.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
-		bts, err := ejson.MarshalIndent(handlerService.HandlersDoc(), "", "	")
+		str, err := handlerService.HandlersDoc()
 		if err != nil {
 			logger.Log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		w.Write(bts)
+		w.Write([]byte(str))
 	})
 
 	// TODO: tem que iniciar uma unica vez
