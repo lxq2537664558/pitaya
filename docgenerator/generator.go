@@ -57,6 +57,11 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 		return "", nil
 	}
 
+	err = writer.Flush()
+	if err != nil {
+		return "", nil
+	}
+
 	return b.String(), nil
 }
 
