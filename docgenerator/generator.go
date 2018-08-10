@@ -3,6 +3,7 @@ package docgenerator
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"html/template"
 	"reflect"
 	"strings"
@@ -11,7 +12,10 @@ import (
 
 // HTMLDocForHandlers ...
 func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
-	docs := docsForHandlers(handlers)
+	docs, err := docsForHandlers(handlers)
+	if err != nil {
+		return "", err
+	}
 
 	const tpl = `
 <!DOCTYPE html>
@@ -27,7 +31,7 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 			<pre name="json">{{ $value.Input }}</pre>
 			<h3>Output</h3>
 			{{ range $value.Output }}
-			<pre name="json">.</pre>
+			<pre name="json">{{ . }}</pre>
 			{{ end }}
 			</div>
 		{{ end }}
@@ -55,21 +59,25 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 }
 
 type doc struct {
-	Input  map[string]interface{}
-	Output []interface{}
+	Input  string
+	Output []string
 }
 
-func docsForHandlers(handlers map[string]reflect.Method) map[string]*doc {
+func docsForHandlers(handlers map[string]reflect.Method) (map[string]*doc, error) {
+	var err error
 	docs := map[string]*doc{}
 
 	for name, method := range handlers {
-		docs[name] = docForHandler(method)
+		docs[name], err = docForHandler(method)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return docs
+	return docs, nil
 }
 
-func docForHandler(method reflect.Method) *doc {
+func docForHandler(method reflect.Method) (*doc, error) {
 	input, output := map[string]interface{}{}, []interface{}{}
 
 	if method.Type.NumIn() > 2 {
@@ -101,10 +109,25 @@ func docForHandler(method reflect.Method) *doc {
 		}
 	}
 
-	return &doc{
-		Input:  input,
-		Output: output,
+	bts, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
 	}
+	inputStr := string(bts)
+
+	outputStrs := make([]string, len(output))
+	for idx, o := range output {
+		bts, err := json.Marshal(o)
+		if err != nil {
+			return nil, err
+		}
+		outputStrs[idx] = string(bts)
+	}
+
+	return &doc{
+		Input:  inputStr,
+		Output: outputStrs,
+	}, nil
 }
 
 func parseStruct(typ reflect.Type) reflect.Type {
