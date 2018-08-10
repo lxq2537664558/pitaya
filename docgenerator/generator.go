@@ -3,6 +3,7 @@ package docgenerator
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"html/template"
 	"reflect"
 	"strings"
@@ -11,7 +12,10 @@ import (
 
 // HTMLDocForHandlers ...
 func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
-	docs := docsForHandlers(handlers)
+	docs, err := docsForHandlers(handlers)
+	if err != nil {
+		return "", err
+	}
 
 	const tpl = `
 <!DOCTYPE html>
@@ -50,14 +54,27 @@ type Doc struct {
 	Output map[string]interface{}
 }
 
-func docsForHandlers(handlers map[string]reflect.Method) map[string]*Doc {
-	docs := map[string]*Doc{}
-
-	for name, method := range handlers {
-		docs[name] = docForHandler(method)
+func (d *Doc) pretty() (string, error) {
+	bts, err := json.MarshalIndent(d, "", "	")
+	if err != nil {
+		return "", err
 	}
 
-	return docs
+	return string(bts), nil
+}
+
+func docsForHandlers(handlers map[string]reflect.Method) (map[string]string, error) {
+	var err error
+	docs := map[string]string{}
+
+	for name, method := range handlers {
+		docs[name], err = docForHandler(method).pretty()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return docs, nil
 }
 
 func docForHandler(method reflect.Method) *Doc {
