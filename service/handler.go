@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"reflect"
 	"strings"
 	"time"
 
@@ -34,6 +35,7 @@ import (
 	"github.com/topfreegames/pitaya/component"
 	"github.com/topfreegames/pitaya/constants"
 	pcontext "github.com/topfreegames/pitaya/context"
+	"github.com/topfreegames/pitaya/docgenerator"
 	e "github.com/topfreegames/pitaya/errors"
 	"github.com/topfreegames/pitaya/internal/codec"
 	"github.com/topfreegames/pitaya/internal/message"
@@ -318,10 +320,10 @@ func (h *HandlerService) DumpServices() {
 }
 
 // HandlersDoc ...
-func (h *HandlerService) HandlersDoc() map[string]interface{} {
-	docs := map[string]interface{}{}
+func (h *HandlerService) HandlersDoc() string {
+	methods := map[string]reflect.Method{}
 	for name, handler := range handlers {
-		docs[name] = handler.Doc()
+		methods[name] = handler.Method
 	}
-	return docs
+	return docgenerator.HTMLDocForHandlers(methods)
 }
