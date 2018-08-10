@@ -3,7 +3,6 @@ package docgenerator
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"html/template"
 	"reflect"
 	"strings"
@@ -12,10 +11,7 @@ import (
 
 // HTMLDocForHandlers ...
 func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
-	docs, err := docsForHandlers(handlers)
-	if err != nil {
-		return "", err
-	}
+	docs := docsForHandlers(handlers)
 
 	const tpl = `
 <!DOCTYPE html>
@@ -24,13 +20,22 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 		<meta charset="UTF-8">
 	</head>
 	<body>
-		{{range $key, $value := .}}
+		{{ range $key, $value := . }}
 			<div>
 			<h2>{{ $key }}</h2>
 			<h3>Input</h3>
-			{{ $value }}
+			<pre name="json">{{ $value.Input }}</pre>
+			<h3>Output</h3>
+			{{ range $value.Output }}
+			<pre name="json">.</pre>
+			{{ end }}
 			</div>
-		{{end}}
+		{{ end }}
+	<script>
+    for (const o of document.getElementsByName("json")) {
+      o.innerHTML = JSON.stringify(JSON.parse(o.innerHTML), undefined, 4)
+    }
+	</script>
 	</body>
 </html>`
 
@@ -49,36 +54,22 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 	return b.String(), nil
 }
 
-// Doc ...
-type Doc struct {
+type doc struct {
 	Input  map[string]interface{}
 	Output []interface{}
 }
 
-func (d *Doc) pretty() (string, error) {
-	bts, err := json.MarshalIndent(d, "", "	")
-	if err != nil {
-		return "", err
-	}
-
-	return string(bts), nil
-}
-
-func docsForHandlers(handlers map[string]reflect.Method) (map[string]string, error) {
-	var err error
-	docs := map[string]string{}
+func docsForHandlers(handlers map[string]reflect.Method) map[string]*doc {
+	docs := map[string]*doc{}
 
 	for name, method := range handlers {
-		docs[name], err = docForHandler(method).pretty()
-		if err != nil {
-			return nil, err
-		}
+		docs[name] = docForHandler(method)
 	}
 
-	return docs, nil
+	return docs
 }
 
-func docForHandler(method reflect.Method) *Doc {
+func docForHandler(method reflect.Method) *doc {
 	input, output := map[string]interface{}{}, []interface{}{}
 
 	if method.Type.NumIn() > 2 {
@@ -110,7 +101,7 @@ func docForHandler(method reflect.Method) *Doc {
 		}
 	}
 
-	return &Doc{
+	return &doc{
 		Input:  input,
 		Output: output,
 	}
