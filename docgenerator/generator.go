@@ -25,9 +25,11 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 	</head>
 	<body>
 		<script>
+		try {
 			for (const o of document.getElementsByName("json")) {
 				o.innerHTML = JSON.stringify(JSON.parse(o.innerHTML), undefined, 4)
 			}
+		} catch(e) {}
 		</script>
 		{{ range $key, $value := . }}
 			<div>
