@@ -30,9 +30,8 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 			<h3>Input</h3>
 			<pre name="json">{{ $value.Input }}</pre>
 			<h3>Output</h3>
-			{{ range $value.Output }}
-			<pre name="json">{{ . }}</pre>
-			{{ end }}
+			<pre name="json">Response: {{ index $value.Output 0 }}</pre>
+			<pre name="json">Error:    {{ index $value.Output 1 }}</pre>
 			</div>
 		{{ end }}
 	<script>
