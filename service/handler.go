@@ -316,3 +316,12 @@ func (h *HandlerService) DumpServices() {
 		logger.Log.Infof("registered handler %s, isRawArg: %s", name, handlers[name].IsRawArg)
 	}
 }
+
+// HandlersDoc ...
+func (h *HandlerService) HandlersDoc() map[string]interface{} {
+	docs := map[string]interface{}{}
+	for name, handler := range handlers {
+		docs[name] = handler.Doc()
+	}
+	return docs
+}

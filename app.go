@@ -22,13 +22,17 @@ package pitaya
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"reflect"
 	"strings"
 	"syscall"
-
 	"time"
+
+	ejson "encoding/json"
 
 	"github.com/google/uuid"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -162,6 +166,7 @@ func configureMetrics(serverType string) {
 		}
 	}
 
+	exposeHandlersDoc()
 }
 
 // AddAcceptor adds a new acceptor to app
@@ -495,4 +500,22 @@ func GetFromPropagateCtx(ctx context.Context, key string) interface{} {
 // The span context can be received directly or via an RPC call
 func ExtractSpan(ctx context.Context) (opentracing.SpanContext, error) {
 	return tracing.ExtractSpan(ctx)
+}
+
+func exposeHandlersDoc() {
+	http.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+		bts, err := ejson.MarshalIndent(handlerService.HandlersDoc(), "", "	")
+		if err != nil {
+			logger.Log.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(bts)
+	})
+
+	// TODO: tem que iniciar uma unica vez
+	go (func() {
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", 8082), nil))
+	})()
 }
