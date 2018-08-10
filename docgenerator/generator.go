@@ -26,7 +26,8 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 	<body>
 		{{range $key, $value := .}}
 			<div>
-			<b>{{ $key }}</b>
+			<h2>{{ $key }}</h2>
+			<h3>Input</h3>
 			{{ $value }}
 			</div>
 		{{end}}
@@ -51,7 +52,7 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 // Doc ...
 type Doc struct {
 	Input  map[string]interface{}
-	Output map[string]interface{}
+	Output []interface{}
 }
 
 func (d *Doc) pretty() (string, error) {
@@ -78,20 +79,17 @@ func docsForHandlers(handlers map[string]reflect.Method) (map[string]string, err
 }
 
 func docForHandler(method reflect.Method) *Doc {
-	input, output := map[string]interface{}{}, map[string]interface{}{}
+	input, output := map[string]interface{}{}, []interface{}{}
 
 	if method.Type.NumIn() > 2 {
 		isOutput := false
 		in := method.Type.In(2)
 		elm := in.Elem()
-		fields := map[string]interface{}{}
 		for i := 0; i < elm.NumField(); i++ {
 			if name, valid := getName(elm.Field(i), isOutput); valid {
-				fields[name] = parseType(elm.Field(i).Type, isOutput)
+				input[name] = parseType(elm.Field(i).Type, isOutput)
 			}
 		}
-
-		input[in.String()] = fields
 	}
 
 	for i := 0; i < method.Type.NumOut(); i++ {
@@ -106,9 +104,9 @@ func docForHandler(method reflect.Method) *Doc {
 				}
 			}
 
-			output[out.String()] = fields
+			output = append(output, fields)
 		} else {
-			output[out.String()] = out.String()
+			output = append(output, out.String())
 		}
 	}
 
