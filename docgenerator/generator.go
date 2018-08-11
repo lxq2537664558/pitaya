@@ -24,15 +24,41 @@ func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
 		<meta charset="UTF-8">
 	</head>
 	<body>
+    <style>
+    body {
+      text-align: left;
+      margin: auto;
+      margin-left:1%; 
+      margin-right:1%;
+    }
+    div {
+      background-color:#E0EBF5;
+    }
+    table {
+      background-color:#F5F5F5;
+    }
+    table.center {
+      width: 100%;
+    }
+    th {
+      width: 50%;
+    }
+    </style>
+
+    <h1>List of Handlers</h1>
+
 		{{ range $key, $value := . }}
-			<div>
 			<h2>{{ $key }}</h2>
-			<h3>Input</h3>
-			<pre name="json">{{ $value.Input }}</pre>
-			<h3>Output</h3>
-			Response: <pre name="json">{{ index $value.Output 0 }}</pre>
-			Error:    <pre name="json">{{ index $value.Output 1 }}</pre>
-			</div>
+			<table class="center">
+			<tr>
+				<th>Input</th>
+				<th>Output</th>
+			</tr>
+			<tr>
+				<th><pre name="json">{{ $value.Input }}</pre></th>
+				<th><pre name="json">{{ index $value.Output 0 }}</pre></th>
+			</tr>
+			</table>
 		{{ end }}
 	<script>
 	for (const o of document.getElementsByName("json")) {
