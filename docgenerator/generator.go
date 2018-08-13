@@ -6,35 +6,37 @@ import (
 	"unicode"
 
 	"github.com/topfreegames/pitaya/component"
+	"github.com/topfreegames/pitaya/route"
 )
 
 const (
 	inputKey   = "input"
 	outputKey  = "output"
-	serviceKey = "server"
 	typeKey    = "type"
 	remoteCte  = "remote"
 	handlerCte = "handler"
 )
 
 // Docs returns a map from route to input and output
-func Docs(services map[string]*component.Service) map[string]interface{} {
+func Docs(serverType string, services map[string]*component.Service) map[string]interface{} {
 	docs := map[string]interface{}{}
 
 	for serviceName, service := range services {
 		for name, handler := range service.Handlers {
-			docs[name] = docForHandler(serviceName, handlerCte, handler.Method)
+			routeName := route.NewRoute(serverType, serviceName, name)
+			docs[routeName.String()] = docForHandler(handlerCte, handler.Method)
 		}
 
 		for name, remote := range service.Remotes {
-			docs[name] = docForHandler(serviceName, remoteCte, remote.Method)
+			routeName := route.NewRoute(serverType, serviceName, name)
+			docs[routeName.String()] = docForHandler(remoteCte, remote.Method)
 		}
 	}
 
 	return docs
 }
 
-func docForHandler(serviceName, component string, method reflect.Method) map[string]interface{} {
+func docForHandler(component string, method reflect.Method) map[string]interface{} {
 	var input interface{}
 	output := []interface{}{}
 
@@ -74,10 +76,9 @@ func docForHandler(serviceName, component string, method reflect.Method) map[str
 	}
 
 	return map[string]interface{}{
-		inputKey:   input,
-		outputKey:  output,
-		serviceKey: serviceName,
-		typeKey:    component,
+		inputKey:  input,
+		outputKey: output,
+		typeKey:   component,
 	}
 }
 

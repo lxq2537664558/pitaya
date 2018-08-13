@@ -320,5 +320,5 @@ func (h *HandlerService) DumpServices() {
 
 // HandlersDoc ...
 func (h *HandlerService) HandlersDoc() map[string]interface{} {
-	return docgenerator.Docs(h.services)
+	return docgenerator.Docs(h.server.Type, h.services)
 }
