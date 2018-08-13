@@ -22,6 +22,7 @@ package pitaya
 
 import (
 	"context"
+	ejson "encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -502,14 +503,15 @@ func ExtractSpan(ctx context.Context) (opentracing.SpanContext, error) {
 
 func exposeHandlersDoc() {
 	http.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
-		str, err := handlerService.HandlersDoc()
+		doc := handlerService.HandlersDoc()
+		bts, err := ejson.Marshal(doc)
 		if err != nil {
 			logger.Log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		w.Write([]byte(str))
+		w.Write(bts)
 	})
 
 	// TODO: tem que iniciar uma unica vez

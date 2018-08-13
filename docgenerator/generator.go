@@ -1,120 +1,36 @@
 package docgenerator
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
-	"html/template"
 	"reflect"
 	"strings"
 	"unicode"
+
+	"github.com/topfreegames/pitaya/component"
 )
 
-// HTMLDocForHandlers ...
-func HTMLDocForHandlers(handlers map[string]reflect.Method) (string, error) {
-	docs, err := docsForHandlers(handlers)
-	if err != nil {
-		return "", err
+const (
+	inputKey  = "input"
+	outputKey = "output"
+	typeKey   = "type"
+)
+
+// Docs returns a map from route to input and output
+func Docs(handlers map[string]*component.Handler) map[string]interface{} {
+	docs := map[string]interface{}{}
+
+	for name, handler := range handlers {
+		docs[name] = docForHandler(handler)
 	}
 
-	const tpl = `
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="UTF-8">
-	</head>
-	<body>
-    <style>
-    body {
-      text-align: left;
-      margin: auto;
-      margin-left:1%; 
-      margin-right:1%;
-    }
-    div {
-      background-color:#E0EBF5;
-    }
-    table {
-      background-color:#F5F5F5;
-    }
-    table.center {
-      width: 100%;
-    }
-    th {
-      width: 50%;
-    }
-    </style>
-
-    <h1>List of Handlers</h1>
-
-		{{ range $key, $value := . }}
-			<h2>{{ $key }}</h2>
-			<table class="center">
-			<tr>
-				<th>Input</th>
-				<th>Output</th>
-			</tr>
-			<tr>
-				<th><pre name="json">{{ $value.Input }}</pre></th>
-				<th><pre name="json">{{ index $value.Output 0 }}</pre></th>
-			</tr>
-			</table>
-		{{ end }}
-	<script>
-	for (const o of document.getElementsByName("json")) {
-		try {
-			o.innerHTML = JSON.stringify(JSON.parse(o.innerHTML), undefined, 4)
-		} catch(e) {}
-	}
-	</script>
-	</body>
-</html>`
-
-	t, err := template.New("dochtml").Parse(tpl)
-	if err != nil {
-		return "", nil
-	}
-
-	var b bytes.Buffer
-	writer := bufio.NewWriter(&b)
-	err = t.ExecuteTemplate(writer, "dochtml", docs)
-	if err != nil {
-		return "", nil
-	}
-
-	err = writer.Flush()
-	if err != nil {
-		return "", nil
-	}
-
-	return b.String(), nil
+	return docs
 }
 
-type doc struct {
-	Input  string
-	Output []string
-}
-
-func docsForHandlers(handlers map[string]reflect.Method) (map[string]*doc, error) {
-	var err error
-	docs := map[string]*doc{}
-
-	for name, method := range handlers {
-		docs[name], err = docForHandler(method)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return docs, nil
-}
-
-func docForHandler(method reflect.Method) (*doc, error) {
+func docForHandler(handler *component.Handler) map[string]interface{} {
 	input, output := map[string]interface{}{}, []interface{}{}
 
-	if method.Type.NumIn() > 2 {
+	if handler.Method.Type.NumIn() > 2 {
 		isOutput := false
-		in := method.Type.In(2)
+		in := handler.Method.Type.In(2)
 		elm := in.Elem()
 		for i := 0; i < elm.NumField(); i++ {
 			if name, valid := getName(elm.Field(i), isOutput); valid {
@@ -123,9 +39,9 @@ func docForHandler(method reflect.Method) (*doc, error) {
 		}
 	}
 
-	for i := 0; i < method.Type.NumOut(); i++ {
+	for i := 0; i < handler.Method.Type.NumOut(); i++ {
 		isOutput := false
-		out := method.Type.Out(i)
+		out := handler.Method.Type.Out(i)
 		if out.Kind() == reflect.Ptr {
 			elm := out.Elem()
 			fields := map[string]interface{}{}
@@ -141,25 +57,11 @@ func docForHandler(method reflect.Method) (*doc, error) {
 		}
 	}
 
-	bts, err := json.Marshal(input)
-	if err != nil {
-		return nil, err
+	return map[string]interface{}{
+		inputKey:  input,
+		outputKey: output,
+		typeKey:   handler.Type.String(),
 	}
-	inputStr := string(bts)
-
-	outputStrs := make([]string, len(output))
-	for idx, o := range output {
-		bts, err := json.Marshal(o)
-		if err != nil {
-			return nil, err
-		}
-		outputStrs[idx] = string(bts)
-	}
-
-	return &doc{
-		Input:  inputStr,
-		Output: outputStrs,
-	}, nil
 }
 
 func parseStruct(typ reflect.Type) reflect.Type {
