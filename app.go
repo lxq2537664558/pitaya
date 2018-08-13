@@ -503,8 +503,11 @@ func ExtractSpan(ctx context.Context) (opentracing.SpanContext, error) {
 
 func exposeHandlersDoc() {
 	http.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
-		doc := handlerService.HandlersDoc()
-		bts, err := ejson.Marshal(doc)
+		docs := map[string]interface{}{
+			"handlers": handlerService.Docs(),
+			"remotes":  remoteService.Docs(),
+		}
+		bts, err := ejson.Marshal(docs)
 		if err != nil {
 			logger.Log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)

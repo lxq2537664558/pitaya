@@ -19,45 +19,57 @@ const (
 )
 
 type docs struct {
-	Handlers map[string]*doc
-	Remotes  map[string]*doc
+	Handlers docMap `json:"handlers"`
+	Remotes  docMap `json:"remotes"`
 }
+
+type docMap map[string]*doc
 
 type doc struct {
-	Input  interface{}
-	Output []interface{}
+	Input  interface{}   `json:"input"`
+	Output []interface{} `json:"output"`
 }
 
-// Docs returns a map from route to input and output
-func Docs(serverType string, services map[string]*component.Service) map[string]interface{} {
+// HandlersDocs returns a map from route to input and output
+func HandlersDocs(serverType string, services map[string]*component.Service) map[string]interface{} {
 	docs := &docs{
 		Handlers: map[string]*doc{},
-		Remotes:  map[string]*doc{},
 	}
 
 	for serviceName, service := range services {
 		for name, handler := range service.Handlers {
 			routeName := route.NewRoute(serverType, serviceName, name)
-			docs.Handlers[routeName.String()] = docForHandler(handlerCte, handler.Method)
-		}
-
-		for name, remote := range service.Remotes {
-			routeName := route.NewRoute(serverType, serviceName, name)
-			docs.Remotes[routeName.String()] = docForHandler(remoteCte, remote.Method)
+			docs.Handlers[routeName.String()] = docForMethod(handler.Method)
 		}
 	}
 
-	return docs.toMap()
+	return docs.Handlers.toMap()
 }
 
-func (d *docs) toMap() map[string]interface{} {
+// RemotesDocs returns a map from route to input and output
+func RemotesDocs(serverType string, services map[string]*component.Service) map[string]interface{} {
+	docs := &docs{
+		Remotes: map[string]*doc{},
+	}
+
+	for serviceName, service := range services {
+		for name, remote := range service.Remotes {
+			routeName := route.NewRoute(serverType, serviceName, name)
+			docs.Remotes[routeName.String()] = docForMethod(remote.Method)
+		}
+	}
+
+	return docs.Remotes.toMap()
+}
+
+func (d docMap) toMap() map[string]interface{} {
 	var m map[string]interface{}
 	bts, _ := json.Marshal(d)
 	json.Unmarshal(bts, &m)
 	return m
 }
 
-func docForHandler(component string, method reflect.Method) *doc {
+func docForMethod(method reflect.Method) *doc {
 	doc := &doc{
 		Output: []interface{}{},
 	}
