@@ -22,10 +22,6 @@ package pitaya
 
 import (
 	"context"
-	ejson "encoding/json"
-	"fmt"
-	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"reflect"
@@ -164,8 +160,6 @@ func configureMetrics(serverType string) {
 			AddMetricsReporter(metricsReporter)
 		}
 	}
-
-	exposeHandlersDoc()
 }
 
 // AddAcceptor adds a new acceptor to app
@@ -501,24 +495,10 @@ func ExtractSpan(ctx context.Context) (opentracing.SpanContext, error) {
 	return tracing.ExtractSpan(ctx)
 }
 
-func exposeHandlersDoc() {
-	http.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
-		docs := map[string]interface{}{
-			"handlers": handlerService.Docs(),
-			"remotes":  remoteService.Docs(),
-		}
-		bts, err := ejson.Marshal(docs)
-		if err != nil {
-			logger.Log.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.Write(bts)
-	})
-
-	// TODO: tem que iniciar uma unica vez
-	go (func() {
-		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", 8082), nil))
-	})()
+// Documentation returns handler and remotes documentacion
+func Documentation() map[string]interface{} {
+	return map[string]interface{}{
+		"handlers": handlerService.Docs(),
+		"remotes":  remoteService.Docs(),
+	}
 }

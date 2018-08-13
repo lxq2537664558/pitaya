@@ -318,7 +318,7 @@ func (h *HandlerService) DumpServices() {
 	}
 }
 
-// Docs ...
+// Docs returns documentation for handlers
 func (h *HandlerService) Docs() map[string]interface{} {
 	return docgenerator.HandlersDocs(h.server.Type, h.services)
 }

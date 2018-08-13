@@ -430,7 +430,7 @@ func (r *RemoteService) DumpServices() {
 	}
 }
 
-// Docs ...
+// Docs returns documentation for remotes
 func (r *RemoteService) Docs() map[string]interface{} {
 	return docgenerator.RemotesDocs(r.server.Type, r.services)
 }
