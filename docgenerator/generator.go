@@ -1,6 +1,7 @@
 package docgenerator
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 	"unicode"
@@ -17,28 +18,49 @@ const (
 	handlerCte = "handler"
 )
 
+type docs struct {
+	Handlers map[string]*doc
+	Remotes  map[string]*doc
+}
+
+type doc struct {
+	Input  interface{}
+	Output []interface{}
+}
+
 // Docs returns a map from route to input and output
 func Docs(serverType string, services map[string]*component.Service) map[string]interface{} {
-	docs := map[string]interface{}{}
+	docs := &docs{
+		Handlers: map[string]*doc{},
+		Remotes:  map[string]*doc{},
+	}
 
 	for serviceName, service := range services {
 		for name, handler := range service.Handlers {
 			routeName := route.NewRoute(serverType, serviceName, name)
-			docs[routeName.String()] = docForHandler(handlerCte, handler.Method)
+			docs.Handlers[routeName.String()] = docForHandler(handlerCte, handler.Method)
 		}
 
 		for name, remote := range service.Remotes {
 			routeName := route.NewRoute(serverType, serviceName, name)
-			docs[routeName.String()] = docForHandler(remoteCte, remote.Method)
+			docs.Remotes[routeName.String()] = docForHandler(remoteCte, remote.Method)
 		}
 	}
 
-	return docs
+	return docs.toMap()
 }
 
-func docForHandler(component string, method reflect.Method) map[string]interface{} {
-	var input interface{}
-	output := []interface{}{}
+func (d *docs) toMap() map[string]interface{} {
+	var m map[string]interface{}
+	bts, _ := json.Marshal(d)
+	json.Unmarshal(bts, &m)
+	return m
+}
+
+func docForHandler(component string, method reflect.Method) *doc {
+	doc := &doc{
+		Output: []interface{}{},
+	}
 
 	if method.Type.NumIn() > 2 {
 		isOutput := false
@@ -51,9 +73,9 @@ func docForHandler(component string, method reflect.Method) map[string]interface
 					fields[name] = parseType(elm.Field(i).Type, isOutput)
 				}
 			}
-			input = fields
+			doc.Input = fields
 		} else {
-			input = parseType(in, isOutput)
+			doc.Input = parseType(in, isOutput)
 		}
 	}
 
@@ -69,17 +91,13 @@ func docForHandler(component string, method reflect.Method) map[string]interface
 				}
 			}
 
-			output = append(output, fields)
+			doc.Output = append(doc.Output, fields)
 		} else {
-			output = append(output, out.String())
+			doc.Output = append(doc.Output, out.String())
 		}
 	}
 
-	return map[string]interface{}{
-		inputKey:  input,
-		outputKey: output,
-		typeKey:   component,
-	}
+	return doc
 }
 
 func parseStruct(typ reflect.Type) reflect.Type {
