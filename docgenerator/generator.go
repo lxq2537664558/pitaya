@@ -9,39 +9,55 @@ import (
 )
 
 const (
-	inputKey  = "input"
-	outputKey = "output"
-	typeKey   = "type"
+	inputKey   = "input"
+	outputKey  = "output"
+	serviceKey = "server"
+	typeKey    = "type"
+	remoteCte  = "remote"
+	handlerCte = "handler"
 )
 
 // Docs returns a map from route to input and output
-func Docs(handlers map[string]*component.Handler) map[string]interface{} {
+func Docs(services map[string]*component.Service) map[string]interface{} {
 	docs := map[string]interface{}{}
 
-	for name, handler := range handlers {
-		docs[name] = docForHandler(handler)
+	for serviceName, service := range services {
+		for name, handler := range service.Handlers {
+			docs[name] = docForHandler(serviceName, handlerCte, handler.Method)
+		}
+
+		for name, remote := range service.Remotes {
+			docs[name] = docForHandler(serviceName, remoteCte, remote.Method)
+		}
 	}
 
 	return docs
 }
 
-func docForHandler(handler *component.Handler) map[string]interface{} {
-	input, output := map[string]interface{}{}, []interface{}{}
+func docForHandler(serviceName, component string, method reflect.Method) map[string]interface{} {
+	var input interface{}
+	output := []interface{}{}
 
-	if handler.Method.Type.NumIn() > 2 {
+	if method.Type.NumIn() > 2 {
 		isOutput := false
-		in := handler.Method.Type.In(2)
-		elm := in.Elem()
-		for i := 0; i < elm.NumField(); i++ {
-			if name, valid := getName(elm.Field(i), isOutput); valid {
-				input[name] = parseType(elm.Field(i).Type, isOutput)
+		in := method.Type.In(2)
+		if in.Kind() == reflect.Ptr {
+			fields := map[string]interface{}{}
+			elm := in.Elem()
+			for i := 0; i < elm.NumField(); i++ {
+				if name, valid := getName(elm.Field(i), isOutput); valid {
+					fields[name] = parseType(elm.Field(i).Type, isOutput)
+				}
 			}
+			input = fields
+		} else {
+			input = parseType(in, isOutput)
 		}
 	}
 
-	for i := 0; i < handler.Method.Type.NumOut(); i++ {
+	for i := 0; i < method.Type.NumOut(); i++ {
 		isOutput := false
-		out := handler.Method.Type.Out(i)
+		out := method.Type.Out(i)
 		if out.Kind() == reflect.Ptr {
 			elm := out.Elem()
 			fields := map[string]interface{}{}
@@ -58,9 +74,10 @@ func docForHandler(handler *component.Handler) map[string]interface{} {
 	}
 
 	return map[string]interface{}{
-		inputKey:  input,
-		outputKey: output,
-		typeKey:   handler.Type.String(),
+		inputKey:   input,
+		outputKey:  output,
+		serviceKey: serviceName,
+		typeKey:    component,
 	}
 }
 
@@ -126,7 +143,11 @@ func parseType(typ reflect.Type, isOutput bool) interface{} {
 			return typ.String()
 		}
 	case reflect.Slice:
-		return []interface{}{parseType(typ.Elem(), isOutput)}
+		parsed := parseType(typ.Elem(), isOutput)
+		if parsed == "uint8" {
+			return "[]byte"
+		}
+		return []interface{}{parsed}
 	default:
 		return typ.String()
 	}
